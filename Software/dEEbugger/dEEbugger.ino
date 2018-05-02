@@ -1,15 +1,12 @@
 #include <Arduino.h>
-#include <ESP8266WiFi.h>
-#include <ESP8266WiFiMulti.h>
 #include <WebSocketsServer.h>
-#include <Hash.h>
-#include <ESP8266WebServer.h>
-#include <ESP8266mDNS.h>
+//#include <Hash.h>
+#include <WiFi.h>
+#include <ESPmDNS.h>
 #include <WiFiClient.h>
 #include <WiFiUdp.h>
-#include <ArduinoOTA.h>
-#include <DNSServer.h>
-#include <WiFiManager.h>
+//#include <DNSServer.h>
+//#include <WiFiManager.h>
 #include <Wire.h>
 #include "miniDB.h"
 #include "websiteHTML.h"
@@ -36,17 +33,15 @@ unsigned long currentTime = 0;
 const char *ssid = "dEEbugger";
 const char *password = "DEBUGGIN4DAYZ";
 
-MDNSResponder mdns;
+//ESP8266WiFiMulti WiFiMulti;
 
-ESP8266WiFiMulti WiFiMulti;
-
-ESP8266WebServer server(80);
+WiFiServer server(80);
 WebSocketsServer webSocket = WebSocketsServer(81);
 
 void setup()
 {  
   Serial.begin(115200);
-  if(digitalRead(APMODE_BOOT_PIN))
+  if(false)//digitalRead(APMODE_BOOT_PIN))
   {
     WiFi.disconnect();
     WiFi.softAP(ssid, password);
@@ -60,8 +55,17 @@ void setup()
     Serial.println();
     Serial.println("Booting in client mode");
     Serial.println("OTA is available");
-    WiFiManager wifiManager;
-    wifiManager.autoConnect(ssid,password);
+    //WiFiManager wifiManager;
+    //wifiManager.autoConnect(ssid,password);
+    // Connect to WiFi network
+    WiFi.begin(ssid, password);
+    Serial.println("");
+
+    // Wait for connection
+    while (WiFi.status() != WL_CONNECTED) {
+        delay(500);
+        Serial.print(".");
+    }
     Serial.println();
     Serial.print("IP address: ");  
     if (!MDNS.begin("dEEbugger"))
@@ -81,26 +85,8 @@ void setup()
     MDNS.addService("ws", "tcp", 81); 
   }
 
-  ArduinoOTA.setHostname("dEEbugger");
-  ArduinoOTA.onStart([]()
-  {Serial.println("Start");});
-  ArduinoOTA.onEnd([]()
-  {Serial.println("\nEnd");});
-  ArduinoOTA.onProgress([](unsigned int progress, unsigned int total)
-  {Serial.printf("Progress: %u%%\r", (progress / (total / 100)));});
-  ArduinoOTA.onError([](ota_error_t error)
-  {
-    Serial.printf("Error[%u]: ", error);
-    if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
-    else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
-    else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
-    else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
-    else if (error == OTA_END_ERROR) Serial.println("End Failed");
-  });
-  ArduinoOTA.begin();
-
-  server.on("/", handleRoot);
-  server.onNotFound(handleNotFound);
+  //server.on("/", handleRoot);
+  //server.onNotFound(handleNotFound);
   server.begin();
 
   webSocket.begin();
@@ -116,9 +102,34 @@ void loop()
 {  
   currentTime = millis();
   serialEvent();
-  ArduinoOTA.handle();
   webSocket.loop();
-  server.handleClient();
+  //server.handleClient();
+
+  //handle client
+  WiFiClient client = server.available();   // listen for incoming clients
+
+  if (client) {                             // if you get a client,
+    Serial.println("New Client.");           // print a message out the serial port
+    String currentLine = "";                // make a String to hold incoming data from the client
+    while (client.connected()) {            // loop while the client's connected
+      if (client.available()) {             // if there's bytes to read from the client,
+        char c = client.read();             // read a byte, then
+        Serial.write(c);                    // print it out the serial monitor
+        if (c == '\n') {                    // if the byte is a newline character
+          client.println("HTTP/1.1 200 OK");
+          client.println("Content-type:text/html");
+          client.printf("Content-Length: %u\r\n", sizeof(INDEX_HTML));
+          client.println();
+
+          client.print(INDEX_HTML);
+          client.println();
+          client.flush();
+          break;
+        }
+      }
+    }
+    client.stop();
+  }
   if((currentTime - oldTimeADC)>=5)
   {
     ADCHandler();
@@ -155,7 +166,7 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
         break;
     case WStype_BIN:
         Serial.printf("[%u] get binary length: %u\r\n", num, length);
-        hexdump(payload, length);
+        //hexdump(payload, length);
 
         // echo data back to browser
         webSocket.sendBIN(num, payload, length);
@@ -168,12 +179,12 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
 
 void handleRoot()
 {
-  server.send_P(200, "text/html", INDEX_HTML);
+  //server.send_P(200, "text/html", INDEX_HTML);
 }
 
 void handleNotFound()
 {
-  String message = "File Not Found\n\n";
+  /*String message = "File Not Found\n\n";
   message += "URI: ";
   message += server.uri();
   message += "\nMethod: ";
@@ -184,7 +195,7 @@ void handleNotFound()
   for (uint8_t i=0; i<server.args(); i++){
     message += " " + server.argName(i) + ": " + server.arg(i) + "\n";
   }
-  server.send(404, "text/plain", message);
+  server.send(404, "text/plain", message);*/
 }
 
 void serialEvent()

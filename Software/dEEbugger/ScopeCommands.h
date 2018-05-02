@@ -1,10 +1,9 @@
 #include <Arduino.h>
 #include <Wire.h>
 
-#include <ESP8266WiFi.h>
-#include <ESP8266WiFiMulti.h>
+#include <WiFi.h>
 #include <WebSocketsServer.h>
-#include <Hash.h>
+//#include <Hash.h>
 #include "I2CCommands.h"
 #include "miniDB.h"
 

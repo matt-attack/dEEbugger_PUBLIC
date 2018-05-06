@@ -11,6 +11,7 @@
 #include "miniDB.h"
 #include "websiteHTML.h"
 #include "WebsocketInterpreter.h"
+#include "FunctionCommands.h"
 
 #define APMODE_BOOT_PIN 4
 
@@ -38,6 +39,15 @@ const char *password = "DEBUGGIN4DAYZ";
 WiFiServer server(80);
 WebSocketsServer webSocket = WebSocketsServer(81);
 
+void loop2(void*)
+{
+  //update the DAC
+  while (true)
+  {
+    functionGeneratorUpdate(25, 0);
+    functionGeneratorUpdate(26, 1);
+  }
+}
 void setup()
 {  
   Serial.begin(115200);
@@ -96,6 +106,7 @@ void setup()
 
   scopeInit();
   setMsTimer(40);
+  xTaskCreatePinnedToCore(loop2, "loop2", 4096, NULL, 1, NULL, 1);
 }
 
 void loop()
@@ -130,7 +141,7 @@ void loop()
     }
     client.stop();
   }
-  if((currentTime - oldTimeADC)>=5)
+  if((currentTime - oldTimeADC)>=1)
   {
     ADCHandler();
     oldTimeADC = currentTime;

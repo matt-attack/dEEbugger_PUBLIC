@@ -1,4 +1,5 @@
 #include "WebsocketInterpreter.h"
+#include "FunctionCommands.h"
 
 void webSocketDataInterpreter(WebSocketsServer &WEBSOCKETOBJECT, String WEBSOCKETDATA)
 {
@@ -30,6 +31,40 @@ void webSocketDataInterpreter(WebSocketsServer &WEBSOCKETOBJECT, String WEBSOCKE
       subLevelToken = "READ DEVICE";
       byte deviceToRead = i2cCommand.substring(subLevelToken.length()+1).toInt();
       scanI2CRegisters(WEBSOCKETOBJECT, deviceToRead);
+    }
+  }
+  //Function Generator related tasks
+  if(WEBSOCKETDATA.startsWith("FUNCTION"))
+  {
+    //Look at start of line for tokens, add +1 to length to account for space
+    topLevelToken = "FUNCTION";
+    String command = WEBSOCKETDATA.substring(topLevelToken.length()+1);
+    if(command.startsWith("MODE"))
+    {
+      Serial.println("Got mode set");
+      subLevelToken = "MODE";
+      byte deviceToWrite = command.substring(subLevelToken.length()+1).toInt();
+
+      String mode = command.substring(subLevelToken.length()+3);
+      if (mode.startsWith("SINE"))
+      {
+        Serial.println("Setting sine wave");
+        Serial.print((int)deviceToWrite);
+
+        func[deviceToWrite-1] = 0;
+      }
+      else if (mode.startsWith("SQUARE"))
+      {
+        Serial.println("Setting square wave");
+        Serial.print((int)deviceToWrite);
+
+        func[deviceToWrite-1] = 1;
+      }
+      else
+      {
+        // turn it off
+        func[deviceToWrite-1] = 3;
+      }
     }
   }
   //Oscilloscope related tasks

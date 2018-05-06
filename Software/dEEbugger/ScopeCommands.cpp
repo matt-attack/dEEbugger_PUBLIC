@@ -98,38 +98,20 @@ void ADCInit(void)
 		Serial.println("ADC Initialized");
 	}
 }
+char active_channel = 0;
 void setADCChannel(int CHANNEL)
 {   
-    byte internalError, ADCConfigByte;
-    //Select correct channel
-    switch(CHANNEL)
-    {
-        case 0:
-            ADCConfigByte = 97;
-            break;
-        case 1:
-            ADCConfigByte = 99;
-            break;
-        default:
-            ADCConfigByte = 97;
-            break;
-    }
-    
-    //analogInit();
     analogReadResolution(12);
     analogSetWidth(12);
     analogSetCycles(8);
     analogSetSamples(1);
     analogSetClockDiv(1);
     analogSetAttenuation(ADC_11db);
-
-    adcAttachPin(2);
 }
-int ADCRead(void)
+int ADCRead(char channel)
 {
 	//adcStart(2);
-  int value = analogRead(35);
-  Serial.printf("Value: %i\n", value);
+  int value = analogRead(channel);
   return value;//adcEnd(2);
 }
 void ADCHandler(void)
@@ -137,22 +119,22 @@ void ADCHandler(void)
     if(getChanneMode1()=="4V ADC")
     {
         setADCChannel(0);
-        addADCScopeData1(String(ADCRead()));
+        addADCScopeData1(String(ADCRead(35)));
     }
     if(getChanneMode1()=="64V ADC")
     {
-        setADCChannel(1);
-        addADCScopeData1(String(ADCRead()));
+        setADCChannel(0);
+        addADCScopeData1(String(ADCRead(35)));
     }
     if(getChanneMode2()=="4V ADC")
     {
-        setADCChannel(0);
-        addADCScopeData2(String(ADCRead()));
+        setADCChannel(1);
+        addADCScopeData2(String(ADCRead(34)));
     }
     if(getChanneMode2()=="64V ADC")
     {
         setADCChannel(1);
-        addADCScopeData2(String(ADCRead()));
+        addADCScopeData2(String(ADCRead(34)));
     }
 }
 

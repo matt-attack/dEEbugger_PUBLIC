@@ -41,7 +41,7 @@ static const char PROGMEM INDEX_HTML[] = R"rawliteral(
     var xPlotPositionStep = 0;
     var yPlotScaleFactor = 1;
     var xPlotScaleFactor = 1;
-    var xPlotSamplesPerSecond = 200;
+    var xPlotSamplesPerSecond = 1000;
     var xPlotTotalTimeMax = 10;
     var xPlotTotalTime = 10; //Time in seconds
     var yPlotMax = 64;
@@ -73,6 +73,8 @@ static const char PROGMEM INDEX_HTML[] = R"rawliteral(
         websock.send("SCOPE CHANNEL 1 4V ADC");
         websock.send("SCOPE CHANNEL 2 64V ADC");
         websock.send("SCOPE TIMESCALE 40");
+        websock.send("FUNCTION MODE 1 SINE");
+        websock.send("FUNCTION MODE 2 SQUARE");
       };
       websock.onclose = function(evt)
       {
@@ -292,7 +294,7 @@ static const char PROGMEM INDEX_HTML[] = R"rawliteral(
         pctx.lineTo((xDivisions * plotCanvasWidth / 6), plotCanvasHeight);
         pctx.closePath();
         pctx.stroke();
-        pctx.fillText((xDivisions * xPlotTotalTimeMax * xPlotScaleFactor / 6).toFixed(0) + "s", ((plotCanvasWidth * xDivisions / 6)) - pctx.measureText(
+        pctx.fillText((xDivisions * xPlotTotalTimeMax * xPlotScaleFactor / 6).toFixed(2) + "s", ((plotCanvasWidth * xDivisions / 6)) - pctx.measureText(
           (xDivisions * xPlotTotalTimeMax  * xPlotScaleFactor/ 6).toFixed(0) + "s").width / 2, (plotCanvasHeight - 10));
       }
       var yDivisions = 1;
@@ -303,7 +305,7 @@ static const char PROGMEM INDEX_HTML[] = R"rawliteral(
         pctx.lineTo(plotCanvasWidth, (yDivisions * plotCanvasHeight / 4));
         pctx.closePath();
         pctx.stroke();
-        pctx.fillText((yDivisions / 4 * ((yPlotMax) / yPlotScaleFactor)).toFixed(1) + " V", 5, (plotCanvasHeight - (plotCanvasHeight * yDivisions / 4) - 5));
+        pctx.fillText((yDivisions / 4 * ((yPlotMax) / yPlotScaleFactor)).toFixed(3) + " V", 5, (plotCanvasHeight - (plotCanvasHeight * yDivisions / 4) - 5));
       }
       peakDetectFirstReadFlag = false;
     }
@@ -320,9 +322,9 @@ static const char PROGMEM INDEX_HTML[] = R"rawliteral(
           clearPlot();
         }
         xPlotOldPosition = xPlotCurrentPosition;
-        xPlotCurrentPosition += xPlotPositionStep;
         if(wsMessageArray[2] === "DATACHANNEL1")
         {
+            xPlotCurrentPosition += xPlotPositionStep;
             if(document.getElementById("channelSelectElement1").value==="4V ADC")
             {
                 incomingYPlotPosition = incomingYPlotPosition/16;
@@ -422,6 +424,14 @@ static const char PROGMEM INDEX_HTML[] = R"rawliteral(
     i2cFindDevices();
     }
 
+    function selectFunction()
+    {
+      currentScreenElement = "FUNCTION";
+      updateButtonSelect(currentScreenElement);
+      document.getElementById("settingsScreenElement").style.display = "none";
+      toggleSettingsElementFlag = false;
+    }
+
     function updateButtonSelect(BUTTON)
     {
       toggleSettingsElementFlag = true;
@@ -432,9 +442,12 @@ static const char PROGMEM INDEX_HTML[] = R"rawliteral(
       document.getElementById("setTerminalButton").style.color = "white";
       document.getElementById("setI2CButton").style.backgroundColor = "#E87D75";
       document.getElementById("setI2CButton").style.color = "white";
+      document.getElementById("setFunctionButton").style.backgroundColor = "#E87D75";
+      document.getElementById("setFunctionButton").style.color = "white";
       document.getElementById("oscilloscopeScreenElement").style.display = "none";
       document.getElementById("terminalScreenElement").style.display = "none";
       document.getElementById("i2cScreenElement").style.display = "none";
+      document.getElementById("functionScreenElement").style.display = "none";
       if(BUTTON === "SCOPE")
       {
         document.getElementById("setScopeButton").style.backgroundColor = "white";
@@ -452,6 +465,12 @@ static const char PROGMEM INDEX_HTML[] = R"rawliteral(
         document.getElementById("setI2CButton").style.backgroundColor = "white";
         document.getElementById("setI2CButton").style.color = "#4E4E56";
         document.getElementById("i2cScreenElement").style.display = "block";
+      }
+      if(BUTTON === "FUNCTION")
+      {
+        document.getElementById("setFunctionButton").style.backgroundColor = "white";
+        document.getElementById("setFunctionButton").style.color = "#4E4E56";
+        document.getElementById("functionScreenElement").style.display = "block";
       }
     }
 
@@ -547,6 +566,20 @@ static const char PROGMEM INDEX_HTML[] = R"rawliteral(
         document.getElementById("togglePeakDetectionButton").innerHTML = "<b>Peak Detection: On</b>"
         document.getElementById("togglePeakDetectionButton").style.backgroundColor = "#4E4E56";
       }
+    }
+
+    function changeFunctionMode1()
+    {
+      var fchannelSelect2 = "FUNCTION MODE 1 ";
+      fchannelSelect2 += document.getElementById("functionSelectElement1").value;
+      websock.send(fchannelSelect2);
+    }
+
+    function changeFunctionMode2()
+    {
+      var fchannelSelect2 = "FUNCTION MODE 2 ";
+      fchannelSelect2 += document.getElementById("functionSelectElement2").value;
+      websock.send(fchannelSelect2);
     }
 
     function peakDetectFinder(incomingData)
@@ -724,8 +757,11 @@ static const char PROGMEM INDEX_HTML[] = R"rawliteral(
           document.getElementById("i2cScreenElement").style.display = "block";
           document.getElementById("i2cScreenElement").style.width = "85%";
         }
-        document.getElementById("settingsScreenElement").style.display = "none";
-        toggleSettingsElementFlag = false;
+        //if (currentScreenElement === "FUNCTION")
+        //{
+          document.getElementById("settingsScreenElement").style.display = "none";
+          toggleSettingsElementFlag = false;
+        //}
       }
       else
       {
@@ -749,8 +785,11 @@ static const char PROGMEM INDEX_HTML[] = R"rawliteral(
           document.getElementById("i2cScreenElement").style.width = "50%";
           document.getElementById("i2cSettingsElement").style.display = "block";
         }
-        document.getElementById("settingsScreenElement").style.display = "inline-block";
-        toggleSettingsElementFlag = true;
+        //if(currentScreenElement != "FUNCTION")
+        //{
+          document.getElementById("settingsScreenElement").style.display = "inline-block";
+          toggleSettingsElementFlag = true;
+        //}
       }
     }
   </script>
@@ -758,16 +797,19 @@ static const char PROGMEM INDEX_HTML[] = R"rawliteral(
 
 <body onload="javascript:start();" onresize="adjustCanvas();" id="mainBody" style="position:relative; overflow:hidden; width:98vw; height:90vh; margin:0; padding:0; margin-left:1vw; background-color:#4E4E56;" tabindex="1">
   <div id="toggleMenuElement" style="text-align:center; height: 10vh; margin-top: 2.5vh; margin-bottom: 2.5vh;">
-    <div style="display:block; width: 85%; height: 70vh; text-align:center; margin-left:7.5%;"> <button id="setScopeButton" style="-webkit-appearance: none; width: 23.5%; height: 10vh; background-color:white; color:#4E4E56; text-decoration: none; border: 0; padding: 0; border-radius: 5px; font-family:Helvetica; margin-right:1%;" onclick="selectScope()">
+    <div style="display:block; width: 85%; height: 70vh; text-align:center; margin-left:7.5%;"> <button id="setScopeButton" style="-webkit-appearance: none; width: 18.5%; height: 10vh; background-color:white; color:#4E4E56; text-decoration: none; border: 0; padding: 0; border-radius: 5px; font-family:Helvetica; margin-right:1%;" onclick="selectScope()">
         <b>Oscilloscope</b>
       </button><!--NOTE: This comment is to prevent white space between inline blocking elements.
-     --><button id="setTerminalButton" style="-webkit-appearance: none; width: 23.5%; height: 10vh; background-color:#E87D75; color:white; text-decoration: none; border: 0; padding: 0; border-radius: 5px; font-family:Helvetica; margin-left:1%; margin-right:1%;" onclick="selectTerminal()">
+     --><button id="setTerminalButton" style="-webkit-appearance: none; width: 18.5%; height: 10vh; background-color:#E87D75; color:white; text-decoration: none; border: 0; padding: 0; border-radius: 5px; font-family:Helvetica; margin-left:1%; margin-right:1%;" onclick="selectTerminal()">
         <b>Terminal</b>
       </button><!--NOTE: This comment is to prevent white space between inline blocking elements.
-     --><button id="setI2CButton" style="-webkit-appearance: none; width: 23.5%; height: 10vh; background-color:#E87D75; color:white; text-decoration: none; border: 0; padding: 0; border-radius: 5px; font-family:Helvetica; margin-left:1%; margin-right:1%;" onclick="selectI2C()">
+     --><button id="setI2CButton" style="-webkit-appearance: none; width: 18.5%; height: 10vh; background-color:#E87D75; color:white; text-decoration: none; border: 0; padding: 0; border-radius: 5px; font-family:Helvetica; margin-left:1%; margin-right:1%;" onclick="selectI2C()">
         <b>I2C</b>
       </button><!--NOTE: This comment is to prevent white space between inline blocking elements.
-     --><button id="setSettingsButton" style="-webkit-appearance: none; width: 23.5%; height: 10vh; background-color:#E87D75; color:white; text-decoration: none; border: 0; padding: 0; border-radius: 5px; font-family:Helvetica; margin-left:1%;" onclick="updateSettingsElementToggle()">
+     --><button id="setFunctionButton" style="-webkit-appearance: none; width: 18.5%; height: 10vh; background-color:#E87D75; color:white; text-decoration: none; border: 0; padding: 0; border-radius: 5px; font-family:Helvetica; margin-left:1%;" onclick="selectFunction()">
+        <b>Function</b>
+      </button><!--NOTE: This comment is to prevent white space between inline blocking elements.
+     --><button id="setSettingsButton" style="-webkit-appearance: none; width: 18.5%; height: 10vh; background-color:#E87D75; color:white; text-decoration: none; border: 0; padding: 0; border-radius: 5px; font-family:Helvetica; margin-left:1%;" onclick="updateSettingsElementToggle()">
         <b>Settings</b>
       </button> </div>
   </div><!--NOTE: This comment is to prevent white space between inline blocking elements.
@@ -793,6 +835,22 @@ static const char PROGMEM INDEX_HTML[] = R"rawliteral(
   </div>
   <div style="width: 100%; height:10vh; margin-top:2.5vh; text-align:center;"> 
     <input type="number" id="i2cWriteField" style="width: 100%; height:10vh; padding:0; border:0; border-radius: 5px; text-decoration: none; text-align:center;" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Write to register"/>
+  </div>
+</div>
+<!--NOTE: This comment is to prevent white space between inline blocking elements.
+---><div id="functionScreenElement" style="display:none; width: 85%; height: 80vh; margin-left:7.5%; font-family:Helvetica; vertical-align:top; text-align:center;">
+    <div style="display:block; width:100%; height: 65vh; text-align:center;">
+    <div style="width: 100%; height:12.5vh; margin-top:2.5vh;"> <span style="width: 100%; height:2.5vh;">Channel 1 Function</span> <select id="functionSelectElement1" onchange="changeFunctionMode1();" style="display:block; -webkit-appearance: none; box-sizing: content-box; width: 70%; height:10vh; background-color: #E87D75; color:white; border:0; border-radius: 5px; text-align:center; text-align-last:center; margin-left:15%;">
+      <option value="OFF">Off</option>
+      <option value="SINE" selected="selected">Sine Wave</option>
+      <option value="SQUARE">Square Wave</option>
+    </select> </div>
+    <div style="width: 100%; height:12.5vh; margin-top:2.5vh;"> <span style="width: 100%; height:2.5vh;">Channel 2 Function</span> <select id="functionSelectElement2" onchange="changeFunctionMode2();" style="display:block; -webkit-appearance: none; box-sizing: content-box; width: 70%; height:10vh; background-color: #E87D75; color:white; border:0; border-radius: 5px; text-align:center; text-align-last:center; margin-left:15%;">
+      <option value="OFF" selected="selected">Off</option>
+      <option value="SINE">Sine Wave</option>
+      <option value="SQUARE" selected="selected">Square Wave</option>
+    </select> </div>
+    <div style="width: 100%; height:10vh; margin-top:2.5vh; text-align:center;"> <span style="width: 100%; height:2.5vh;">Channel 1 Amplitude</span> <input type="number" id="amplitude1" min="0" max="3.3" step="0.1" style="width: 100%; height:10vh; padding:0; border:0; border-radius: 5px; text-decoration: none; text-align:center;" value="3.3" onkeydown="changeFunction1Amplitude();" /> </div>
   </div>
 </div><!--NOTE: This comment is to prevent white space between inline blocking elements.
 ---><div id="settingsScreenElement" style="width: 33%; display:none; height: 77.5vh; font-family:Helvetica; vertical-align:top; text-align:center; background-color:white; color:#4E4E56; border-radius:5px; margin-left:2%;"><!--NOTE: This comment is to prevent white space between inline blocking elements.

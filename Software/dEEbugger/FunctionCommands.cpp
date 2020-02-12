@@ -30,6 +30,16 @@ void functionGeneratorUpdate(int channel, int id)
     else
       dacWrite(channel, offset[id]+amplitude[id]);
   }
+  else if (func[id] == 2)
+  {
+    //sawtooth
+    float val = (float)amplitude[id]*(step/(float)period[id]);
+    dacWrite(channel, offset[id]+val);
+  }
+  else
+  {
+    dacWrite(channel, 0);
+  }
 }
 /*void ADCInit(void)
 {

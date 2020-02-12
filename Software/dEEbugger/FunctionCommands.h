@@ -8,6 +8,8 @@
 #include "miniDB.h"
 
 extern int func[2];
+extern int amplitude[2];
+extern int period[2];
 void functionGeneratorInit(void);
 void functionGeneratorHandler(WebSocketsServer &WEBSOCKETOBJECT);
 void FunctionGeneratorInit(void);

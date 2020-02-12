@@ -582,6 +582,20 @@ static const char PROGMEM INDEX_HTML[] = R"rawliteral(
       websock.send(fchannelSelect2);
     }
 
+    function changeFunction1Amplitude()
+    {
+      var fchannelSelect2 = "FUNCTION AMPLITUDE 1 ";
+      fchannelSelect2 += document.getElementById("amplitude1").value;
+      websock.send(fchannelSelect2);
+    }
+
+    function changeFunction1Period()
+    {
+      var fchannelSelect2 = "FUNCTION PERIOD 1 ";
+      fchannelSelect2 += document.getElementById("period1").value;
+      websock.send(fchannelSelect2);
+    }
+
     function peakDetectFinder(incomingData)
     {
       var plotElementID = document.getElementById("plotElement");
@@ -844,13 +858,16 @@ static const char PROGMEM INDEX_HTML[] = R"rawliteral(
       <option value="OFF">Off</option>
       <option value="SINE" selected="selected">Sine Wave</option>
       <option value="SQUARE">Square Wave</option>
+      <option value="SAWTOOTH">Sawtooth Wave</option>
     </select> </div>
     <div style="width: 100%; height:12.5vh; margin-top:2.5vh;"> <span style="width: 100%; height:2.5vh;">Channel 2 Function</span> <select id="functionSelectElement2" onchange="changeFunctionMode2();" style="display:block; -webkit-appearance: none; box-sizing: content-box; width: 70%; height:10vh; background-color: #E87D75; color:white; border:0; border-radius: 5px; text-align:center; text-align-last:center; margin-left:15%;">
       <option value="OFF" selected="selected">Off</option>
       <option value="SINE">Sine Wave</option>
       <option value="SQUARE" selected="selected">Square Wave</option>
+      <option value="SAWTOOTH">Sawtooth Wave</option>
     </select> </div>
-    <div style="width: 100%; height:10vh; margin-top:2.5vh; text-align:center;"> <span style="width: 100%; height:2.5vh;">Channel 1 Amplitude</span> <input type="number" id="amplitude1" min="0" max="3.3" step="0.1" style="width: 100%; height:10vh; padding:0; border:0; border-radius: 5px; text-decoration: none; text-align:center;" value="3.3" onkeydown="changeFunction1Amplitude();" /> </div>
+    <div style="width: 100%; height:10vh; margin-top:2.5vh; text-align:center;"> <span style="width: 100%; height:2.5vh;">Channel 1 Amplitude (V)</span> <input type="number" id="amplitude1" min="0" max="3.3" step="0.1" style="width: 100%; height:10vh; padding:0; border:0; border-radius: 5px; text-decoration: none; text-align:center;" value="3.3" onkeydown="changeFunction1Amplitude();" /> </div>
+    <div style="width: 100%; height:10vh; margin-top:2.5vh; text-align:center;"> <span style="width: 100%; height:2.5vh;">Channel 1 Period (ms)</span> <input type="number" id="period1" min="0.01" max="10000" step="0.1" style="width: 100%; height:10vh; padding:0; border:0; border-radius: 5px; text-decoration: none; text-align:center;" value="1000.0" onkeydown="changeFunction1Period();" /> </div>
   </div>
 </div><!--NOTE: This comment is to prevent white space between inline blocking elements.
 ---><div id="settingsScreenElement" style="width: 33%; display:none; height: 77.5vh; font-family:Helvetica; vertical-align:top; text-align:center; background-color:white; color:#4E4E56; border-radius:5px; margin-left:2%;"><!--NOTE: This comment is to prevent white space between inline blocking elements.
@@ -886,6 +903,8 @@ static const char PROGMEM INDEX_HTML[] = R"rawliteral(
           <option value="25">25X</option>
         </select> </div>
       <div style="width: 100%; height:12.5vh; margin-top:2.5vh;"> <span style="width: 100%; height:2.5vh;">Max X Scale</span> <select id="timescaleSelectElement" onchange="changeTimeScale();" style="display:block; -webkit-appearance: none; box-sizing: content-box; width: 70%; height:10vh; background-color: #E87D75; color:white; border:0; border-radius: 5px; text-align:center; text-align-last:center; margin-left:15%;">
+          <option value="0.1">0.1s</option>
+          <option value="1">1s</option>
           <option value="10" selected="selected">10s</option>
           <option value="20">20s</option>
           <option value="30">30s</option>

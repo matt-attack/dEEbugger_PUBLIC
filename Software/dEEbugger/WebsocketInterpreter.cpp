@@ -1,6 +1,13 @@
 #include "WebsocketInterpreter.h"
 #include "FunctionCommands.h"
 
+int isrCount = 0;
+void IRAM_ATTR onTimer()
+{
+  digitalWrite(4, isrCount++%2);
+}
+
+hw_timer_t* timer = NULL;
 void webSocketDataInterpreter(WebSocketsServer &WEBSOCKETOBJECT, String WEBSOCKETDATA)
 {
   String topLevelToken = "";
@@ -60,11 +67,47 @@ void webSocketDataInterpreter(WebSocketsServer &WEBSOCKETOBJECT, String WEBSOCKE
 
         func[deviceToWrite-1] = 1;
       }
+      else if (mode.startsWith("SAWTOOTH"))
+      {
+        Serial.println("Setting sawtooth wave");
+        Serial.print((int)deviceToWrite);
+
+        func[deviceToWrite-1] = 2;
+      }
       else
       {
         // turn it off
         func[deviceToWrite-1] = 3;
       }
+    }
+    else if (command.startsWith("AMPLITUDE"))
+    {
+      Serial.println("Got amplitude set");
+
+      subLevelToken = "AMPLITUDE";
+      byte deviceToWrite = command.substring(subLevelToken.length()+1).toInt();
+
+      float a = command.substring(subLevelToken.length()+3).toFloat();
+
+      Serial.println(deviceToWrite);
+      Serial.println(a);
+      amplitude[deviceToWrite-1] = (int)(255.0*a/3.3);
+      Serial.println(amplitude[deviceToWrite-1]);
+    }
+    else if (command.startsWith("PERIOD"))
+    {
+      // in milliseconds
+      Serial.println("Got PERIOD set");
+
+      subLevelToken = "PERIOD";
+      byte deviceToWrite = command.substring(subLevelToken.length()+1).toInt();
+
+      float a = command.substring(subLevelToken.length()+3).toFloat()*1000.0;// go from ms to micro seconds
+
+      Serial.println(deviceToWrite);
+      Serial.println(a);
+      period[deviceToWrite-1] = max(a, 1.0f);
+      Serial.println(period[deviceToWrite-1]);
     }
   }
   //Oscilloscope related tasks
